@@ -1,6 +1,37 @@
 use rand::prelude::*;
 use std::fs::read;
 mod obj_reader;
+mod csv_reader;
+#[derive(Debug)]
+struct Extent {
+    min: f32,
+    max: f32,
+    unset: bool,
+}
+
+impl Extent {
+    fn new() -> Self {
+        Self {
+            min: 0.0,
+            max: 0.0,
+            unset: true,
+        }
+    }
+    fn comp(&mut self, other: &f32) {
+        let other = *other;
+        if self.unset {
+            self.min = other;
+            self.max = other;
+            self.unset = false;
+        } else {
+            if self.min > other {
+                self.min = other;
+            } else if self.max < other {
+                self.max = other;
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 enum EL {
@@ -95,11 +126,11 @@ impl QT {
                     // check for subdivision
                     if !b.subdiv {
                         // add the group to our res
-                        println!("hit {:?}", b);
+                        //println!("hit {:?}", b);
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}", b);
+                        //println!("subdiv {:?}", b);
                         b.query(other, res);
                     }
                 }
@@ -112,12 +143,12 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        println!("hit {:?}", b);
+                        //println!("hit {:?}", b);
                         // add the group to our res
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}", b);
+                        //println!("subdiv {:?}", b);
                         b.query(other, res);
                     }
                 }
@@ -130,13 +161,13 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        println!("hit {:?}", b);
+                        //println!("hit {:?}", b);
                         // add the group to our res
 
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}", b);
+                        //println!("subdiv {:?}", b);
                         b.query(other, res);
                     }
                 }
@@ -149,12 +180,12 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        println!("hit {:?}", b);
+                        //println!("hit {:?}", b);
                         // add the group to our res
                         res.extend(self.values.clone().iter());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}", b);
+                        //println!("subdiv {:?}", b);
                         b.query(other, res);
                     }
                 }
@@ -272,15 +303,44 @@ impl QT {
 }
 
 fn main() {
-    let width = 200.0;
-    let height = 200.0;
+    let mut x_extent = Extent::new();
+    let mut z_extent = Extent::new();
     // make a new quad tree
     // t
     let mut t = QT::new(Rect::new(PT::new(100.0, 100.0), 200.0, 200.0), 4);
-    println!("t {:#?}", t);
-    let mut res = vec![];
-    t.query(MeshPT::new(179.0, 0.0,180.0), &mut res);
-    println!("result {:?}", res);
+    let mesh_pts = obj_reader::read_obj();
+    // go through the obj and add to the QT and get an extent
+    for mp in mesh_pts.iter() {
+        x_extent.comp(&mp.x);
+        z_extent.comp(&mp.z);
+    }
+    //println!("{:?} {:?}",x_extent,z_extent);
+    let width = x_extent.max - x_extent.min;
+    let height = z_extent.max - z_extent.min;
+    let mut t = QT::new(Rect::new(PT::new(0.0,0.0), width,height), 4);
+    for mp in mesh_pts.into_iter() {
+        t.addPt(mp);
+    }
+    ////println!("t {:#?}", t);
+    // now read and convert the csv to points, and then make sure to scale the normalized values by our min and max amounts
+    let mut migrant_eles = csv_reader::read_csv();
+    for m_e in migrant_eles.iter_mut() {
+        // scale the me by the extent,
+        m_e.pt.x = m_e.pt.x * (x_extent.max - x_extent.min) + x_extent.min;
+        m_e.pt.z = m_e.pt.z * (z_extent.max - z_extent.min) + z_extent.min;
+        // then query 
+        let mut res = vec![];
+        // clone so we don't lose it
+        t.query(m_e.pt.clone(),&mut res);
+        // then update the m_e's y
+        let mut ave_y = 0.0;
+        for pt in res {
+            ave_y += pt.y;
+        }
+        ave_y /= 4.0;
+        m_e.pt.y = ave_y;
+    } 
+    // save the m_e out
+    println!("{:?}",migrant_eles);
     // use the objreader
-    obj_reader::read_obj();
 }

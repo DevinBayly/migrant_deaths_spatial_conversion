@@ -1,6 +1,6 @@
 use std::fs::read;
-use crate::PT;
-pub fn read_obj() -> Vec<PT> {
+use crate::MeshPT;
+pub fn read_obj() -> Vec<MeshPT> {
     let binary_contents = read("./landscape_full.obj").unwrap();
     // convert to string from utf8`
     let string_contents = String::from_utf8(binary_contents).unwrap();
@@ -15,10 +15,9 @@ pub fn read_obj() -> Vec<PT> {
             let y = coord_iter.next().unwrap().parse::<f32>().unwrap();
             let z = coord_iter.next().unwrap().parse::<f32>().unwrap();
             // add z later
-            point_holder.push(PT::new(x,z));
+            point_holder.push(MeshPT::new(x,y,z));
         }
 
     }
-    println!("point holder {:?}",point_holder);
     return point_holder;
 }
