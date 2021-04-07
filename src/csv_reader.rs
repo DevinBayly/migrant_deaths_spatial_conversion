@@ -2,7 +2,8 @@ use crate::MeshPT;
 use csv;
 use std::io::Read;
 use std::fs::File;
-#[derive(Debug, Clone)]
+use serde::{Serialize};
+#[derive(Debug, Clone,Serialize)]
 pub struct MigrantEle {
     pub pt: MeshPT,
     pub info: Vec<String>,
