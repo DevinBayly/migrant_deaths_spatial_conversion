@@ -71,9 +71,8 @@ impl QT {
             se_child: EL::None,
         }
     }
-    fn query(&self,other:PT) -> Vec<PT> {
+    fn query(&self,other:PT,res: &mut Vec<PT>){
         // find the child that contains our point, and then call query again until we have a non subdivided one
-        let mut res = vec![];
         // check ne
         match &self.ne_child {
             EL::Some(b)=> {
@@ -81,10 +80,12 @@ impl QT {
                     // check for subdivision
                     if !b.subdiv {
                         // add the group to our res
-                        res.extend(self.values.clone());
+                        println!("hit {:?}",b);
+                        res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        res.extend(b.query(other)); 
+                        println!("subdiv {:?}",b);
+                        b.query(other,res); 
                     }
                 }
             },
@@ -96,11 +97,13 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
+                        println!("hit {:?}",b);
                         // add the group to our res
-                        res.extend(self.values.clone());
+                        res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        res.extend(b.query(other)); 
+                        println!("subdiv {:?}",b);
+                        b.query(other,res); 
                     }
                 }
             },
@@ -112,11 +115,14 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
+                        println!("hit {:?}",b);
                         // add the group to our res
-                        res.extend(self.values.clone());
+
+                        res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        res.extend(b.query(other)); 
+                        println!("subdiv {:?}",b);
+                        b.query(other,res); 
                     }
                 }
             },
@@ -128,18 +134,18 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
+                        println!("hit {:?}",b);
                         // add the group to our res
-                        res.extend(self.values.clone());
+                        res.extend(self.values.clone().iter());
                     } else {
                         // query the children of b
-                        res.extend(b.query(other)); 
+                        println!("subdiv {:?}",b);
+                        b.query(other,res); 
                     }
                 }
             },
             _=> {}
         }
-
-        return res;
     }
     fn addPt(&mut self, other: PT) {
         // if it doesn't contain the point don't do anything
@@ -147,7 +153,7 @@ impl QT {
             return 
         }
         // use logic to decide if we should push or punt
-        if self.values.len() < self.capacity {
+        if (self.values.len() < self.capacity) && !self.subdiv {
             self.values.push(other);
         } else {
             if !self.subdiv {
@@ -259,9 +265,10 @@ fn main() {
     let mut rng = thread_rng();
     for i in 0..16 {
         let pt = PT::new(rng.gen::<f32>()*200.0,rng.gen::<f32>()*200.0);
-        println!("i is {}", i);
         t.addPt(pt);
     }
-    println!("{:#?}", t);
-    println!("querying {:?}",t.query(PT::new(10.0,10.0)));
+    println!("t {:#?}",t);
+    let mut res = vec![];
+    t.query(PT::new(179.0,180.0),&mut res);
+    println!("result {:?}",res);
 }
