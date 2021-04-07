@@ -120,13 +120,16 @@ impl QT {
     fn query(&self, other: MeshPT, res: &mut Vec<MeshPT>) {
         // find the child that contains our point, and then call query again until we have a non subdivided one
         // check ne
+        if !self.subdiv && self.bb.contains(&other) {
+            res.extend(self.values.clone());
+        }
         match &self.ne_child {
             EL::Some(b) => {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
                         // add the group to our res
-                        //println!("hit {:?}", b);
+                        //println!("hit ne {:?}", b);
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
@@ -143,7 +146,7 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        //println!("hit {:?}", b);
+                        //println!("hit nw {:?}", b);
                         // add the group to our res
                         res.extend(b.values.clone());
                     } else {
@@ -161,7 +164,7 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        //println!("hit {:?}", b);
+                        //println!("hit se {:?}", b);
                         // add the group to our res
 
                         res.extend(b.values.clone());
@@ -180,9 +183,9 @@ impl QT {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        //println!("hit {:?}", b);
+                        //println!("hit sw {:?}", b);
                         // add the group to our res
-                        res.extend(self.values.clone().iter());
+                        res.extend(b.values.clone());
                     } else {
                         // query the children of b
                         //println!("subdiv {:?}", b);
@@ -321,27 +324,33 @@ fn main() {
     for mp in mesh_pts.into_iter() {
         t.addPt(mp);
     }
-    ////println!("t {:#?}", t);
-    // now read and convert the csv to points, and then make sure to scale the normalized values by our min and max amounts
-    let mut migrant_eles = csv_reader::read_csv();
-    for m_e in migrant_eles.iter_mut() {
-        // scale the me by the extent,
-        m_e.pt.x = m_e.pt.x * (x_extent.max - x_extent.min) + x_extent.min;
-        m_e.pt.z = m_e.pt.z * (z_extent.max - z_extent.min) + z_extent.min;
-        println!("point is {:?}",m_e.pt);
-        // then query 
-        let mut res = vec![];
-        // clone so we don't lose it
-        t.query(m_e.pt.clone(),&mut res);
-        println!("result is {:?}",res);
-        // then update the m_e's y
-        let mut ave_y = 0.0;
-        for pt in res {
-            ave_y += pt.y;
-        }
-        ave_y /= 4.0;
-        m_e.pt.y = ave_y;
-    } 
+    // use this for testing
+    let mut test_pt = MeshPT { x: 28.98285, y: 0.0, z: 33.790874 };
+    let mut res =vec![];
+    t.query(test_pt,&mut res);
+    println!("{:?}",res);
+    println!("{:?}",test_pt);
+    //////println!("t {:#?}", t);
+    //// now read and convert the csv to points, and then make sure to scale the normalized values by our min and max amounts
+    //let mut migrant_eles = csv_reader::read_csv();
+    //for m_e in migrant_eles.iter_mut() {
+    //    // scale the me by the extent,
+    //    m_e.pt.x = m_e.pt.x * (x_extent.max - x_extent.min) + x_extent.min;
+    //    m_e.pt.z = m_e.pt.z * (z_extent.max - z_extent.min) + z_extent.min;
+    //    println!("point is {:?}",m_e.pt);
+    //    // then query 
+    //    let mut res = vec![];
+    //    // clone so we don't lose it
+    //    t.query(m_e.pt.clone(),&mut res);
+    //    println!("result is {:?}",res);
+    //    // then update the m_e's y
+    //    let mut ave_y = 0.0;
+    //    for pt in res {
+    //        ave_y += pt.y;
+    //    }
+    //    ave_y /= 4.0;
+    //    m_e.pt.y = ave_y;
+    //} 
     // save the m_e out
     //println!("{:?}",migrant_eles);
     // use the objreader
