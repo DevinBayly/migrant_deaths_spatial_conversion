@@ -1,13 +1,14 @@
 use rand::prelude::*;
-
+use std::fs::read;
+mod obj_reader;
 
 #[derive(Debug)]
 enum EL {
     None,
     Some(Box<QT>),
 }
-#[derive(Debug,Clone,Copy)]
-struct PT {
+#[derive(Debug, Clone, Copy)]
+pub struct PT {
     x: f32,
     y: f32,
 }
@@ -16,6 +17,20 @@ impl PT {
         PT { x, y }
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct MeshPT {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+impl MeshPT {
+    fn new(x: f32, y: f32, z: f32) -> Self {
+        MeshPT { x, y, z }
+    }
+}
+
+// perhaps create another point that has the, x y z
 
 #[derive(Debug)]
 struct Rect {
@@ -40,13 +55,13 @@ impl Rect {
             h,
         }
     }
-    fn contains(&self, other: &PT) -> bool {
-        other.x >= self.left && other.x < self.right && other.y >= self.bottom && other.y < self.top
+    fn contains(&self, other: &MeshPT) -> bool {
+        other.x >= self.left && other.x < self.right && other.z >= self.bottom && other.z < self.top
     }
 }
 #[derive(Debug)]
 struct QT {
-    values: Vec<PT>,
+    values: Vec<MeshPT>,
     capacity: usize,
     bb: Rect,
     subdiv: bool,
@@ -71,86 +86,86 @@ impl QT {
             se_child: EL::None,
         }
     }
-    fn query(&self,other:PT,res: &mut Vec<PT>){
+    fn query(&self, other: MeshPT, res: &mut Vec<MeshPT>) {
         // find the child that contains our point, and then call query again until we have a non subdivided one
         // check ne
         match &self.ne_child {
-            EL::Some(b)=> {
+            EL::Some(b) => {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
                         // add the group to our res
-                        println!("hit {:?}",b);
+                        println!("hit {:?}", b);
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}",b);
-                        b.query(other,res); 
+                        println!("subdiv {:?}", b);
+                        b.query(other, res);
                     }
                 }
-            },
-            _=> {}
+            }
+            _ => {}
         }
         // check nw
         match &self.nw_child {
-            EL::Some(b)=> {
+            EL::Some(b) => {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        println!("hit {:?}",b);
+                        println!("hit {:?}", b);
                         // add the group to our res
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}",b);
-                        b.query(other,res); 
+                        println!("subdiv {:?}", b);
+                        b.query(other, res);
                     }
                 }
-            },
-            _=> {}
+            }
+            _ => {}
         }
         // check se
         match &self.se_child {
-            EL::Some(b)=> {
+            EL::Some(b) => {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        println!("hit {:?}",b);
+                        println!("hit {:?}", b);
                         // add the group to our res
 
                         res.extend(b.values.clone());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}",b);
-                        b.query(other,res); 
+                        println!("subdiv {:?}", b);
+                        b.query(other, res);
                     }
                 }
-            },
-            _=> {}
+            }
+            _ => {}
         }
         // check sw
         match &self.sw_child {
-            EL::Some(b)=> {
+            EL::Some(b) => {
                 if b.bb.contains(&other) {
                     // check for subdivision
                     if !b.subdiv {
-                        println!("hit {:?}",b);
+                        println!("hit {:?}", b);
                         // add the group to our res
                         res.extend(self.values.clone().iter());
                     } else {
                         // query the children of b
-                        println!("subdiv {:?}",b);
-                        b.query(other,res); 
+                        println!("subdiv {:?}", b);
+                        b.query(other, res);
                     }
                 }
-            },
-            _=> {}
+            }
+            _ => {}
         }
     }
-    fn addPt(&mut self, other: PT) {
+    fn addPt(&mut self, other: MeshPT) {
         // if it doesn't contain the point don't do anything
         if !self.bb.contains(&other) {
-            return 
+            return;
         }
         // use logic to decide if we should push or punt
         if (self.values.len() < self.capacity) && !self.subdiv {
@@ -182,7 +197,7 @@ impl QT {
             //}
         }
     }
-    fn add_to_child(child: &mut EL, other: PT) {
+    fn add_to_child(child: &mut EL, other: MeshPT) {
         match child {
             EL::Some(b) => b.addPt(other),
             _ => {}
@@ -261,14 +276,11 @@ fn main() {
     let height = 200.0;
     // make a new quad tree
     // t
-    let mut t = QT::new(Rect::new(PT::new(100.0,100.0),200.0,200.0),4);
-    let mut rng = thread_rng();
-    for i in 0..16 {
-        let pt = PT::new(rng.gen::<f32>()*200.0,rng.gen::<f32>()*200.0);
-        t.addPt(pt);
-    }
-    println!("t {:#?}",t);
+    let mut t = QT::new(Rect::new(PT::new(100.0, 100.0), 200.0, 200.0), 4);
+    println!("t {:#?}", t);
     let mut res = vec![];
-    t.query(PT::new(179.0,180.0),&mut res);
-    println!("result {:?}",res);
+    t.query(MeshPT::new(179.0, 0.0,180.0), &mut res);
+    println!("result {:?}", res);
+    // use the objreader
+    obj_reader::read_obj();
 }
