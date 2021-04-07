@@ -328,10 +328,12 @@ fn main() {
         // scale the me by the extent,
         m_e.pt.x = m_e.pt.x * (x_extent.max - x_extent.min) + x_extent.min;
         m_e.pt.z = m_e.pt.z * (z_extent.max - z_extent.min) + z_extent.min;
+        println!("point is {:?}",m_e.pt);
         // then query 
         let mut res = vec![];
         // clone so we don't lose it
         t.query(m_e.pt.clone(),&mut res);
+        println!("result is {:?}",res);
         // then update the m_e's y
         let mut ave_y = 0.0;
         for pt in res {
@@ -341,6 +343,6 @@ fn main() {
         m_e.pt.y = ave_y;
     } 
     // save the m_e out
-    println!("{:?}",migrant_eles);
+    //println!("{:?}",migrant_eles);
     // use the objreader
 }
