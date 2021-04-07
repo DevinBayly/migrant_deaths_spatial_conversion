@@ -46,7 +46,7 @@ impl Rect {
 }
 #[derive(Debug)]
 struct QT {
-    value: Vec<PT>,
+    values: Vec<PT>,
     capacity: usize,
     bb: Rect,
     subdiv: bool,
@@ -64,7 +64,7 @@ impl QT {
             bb: rect,
             capacity: cap,
             subdiv: false,
-            value: vec![],
+            values: vec![],
             ne_child: EL::None,
             nw_child: EL::None,
             sw_child: EL::None,
@@ -77,8 +77,8 @@ impl QT {
             return 
         }
         // use logic to decide if we should push or punt
-        if self.value.len() < self.capacity {
-            self.value.push(other);
+        if self.values.len() < self.capacity {
+            self.values.push(other);
         } else {
             if !self.subdiv {
                 self.subdivide();
@@ -160,6 +160,23 @@ impl QT {
             ),
             4,
         )));
+        // add points to children and then set to []
+        for value in self.values.iter() {
+            // ne
+            let mut ref_child = &mut self.ne_child;
+            Self::add_to_child(ref_child, *value);
+            // nw
+            let mut ref_child = &mut self.nw_child;
+            Self::add_to_child(ref_child, *value);
+            // se
+            let mut ref_child = &mut self.se_child;
+            Self::add_to_child(ref_child, *value);
+            // sw
+            let mut ref_child = &mut self.sw_child;
+            Self::add_to_child(ref_child, *value);
+            //match ref_child {
+        }
+        self.values = vec![];
     }
 }
 
@@ -171,7 +188,7 @@ fn main() {
     let mut t = QT::new(Rect::new(PT::new(100.0,100.0),200.0,200.0),4);
     let mut rng = thread_rng();
     for i in 0..16 {
-        let pt = PT::new(rng.gen::<f32>(),rng.gen::<f32>());
+        let pt = PT::new(rng.gen::<f32>()*200.0,rng.gen::<f32>()*200.0);
         println!("i is {}", i);
         t.addPt(pt);
     }
