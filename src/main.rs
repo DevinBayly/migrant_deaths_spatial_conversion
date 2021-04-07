@@ -71,6 +71,76 @@ impl QT {
             se_child: EL::None,
         }
     }
+    fn query(&self,other:PT) -> Vec<PT> {
+        // find the child that contains our point, and then call query again until we have a non subdivided one
+        let mut res = vec![];
+        // check ne
+        match &self.ne_child {
+            EL::Some(b)=> {
+                if b.bb.contains(&other) {
+                    // check for subdivision
+                    if !b.subdiv {
+                        // add the group to our res
+                        res.extend(self.values.clone());
+                    } else {
+                        // query the children of b
+                        res.extend(b.query(other)); 
+                    }
+                }
+            },
+            _=> {}
+        }
+        // check nw
+        match &self.nw_child {
+            EL::Some(b)=> {
+                if b.bb.contains(&other) {
+                    // check for subdivision
+                    if !b.subdiv {
+                        // add the group to our res
+                        res.extend(self.values.clone());
+                    } else {
+                        // query the children of b
+                        res.extend(b.query(other)); 
+                    }
+                }
+            },
+            _=> {}
+        }
+        // check se
+        match &self.se_child {
+            EL::Some(b)=> {
+                if b.bb.contains(&other) {
+                    // check for subdivision
+                    if !b.subdiv {
+                        // add the group to our res
+                        res.extend(self.values.clone());
+                    } else {
+                        // query the children of b
+                        res.extend(b.query(other)); 
+                    }
+                }
+            },
+            _=> {}
+        }
+        // check sw
+        match &self.sw_child {
+            EL::Some(b)=> {
+                if b.bb.contains(&other) {
+                    // check for subdivision
+                    if !b.subdiv {
+                        // add the group to our res
+                        res.extend(self.values.clone());
+                    } else {
+                        // query the children of b
+                        res.extend(b.query(other)); 
+                    }
+                }
+            },
+            _=> {}
+        }
+
+        return res;
+    }
     fn addPt(&mut self, other: PT) {
         // if it doesn't contain the point don't do anything
         if !self.bb.contains(&other) {
@@ -193,4 +263,5 @@ fn main() {
         t.addPt(pt);
     }
     println!("{:#?}", t);
+    println!("querying {:?}",t.query(PT::new(10.0,10.0)));
 }
